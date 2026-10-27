@@ -30,4 +30,14 @@ public class AppUser extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
+
+
+    public static AppUser create(String name, String normalizedEmail, String passwordHash, UserRole role) {
+        AppUser user = new AppUser();
+        user.setName(name);
+        user.setNormalizedEmail(normalizedEmail);
+        user.setPasswordHash(passwordHash);
+        user.setRole(role);
+        return user;
+    }
 }
