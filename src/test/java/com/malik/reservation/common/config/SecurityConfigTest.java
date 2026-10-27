@@ -14,6 +14,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
+import java.util.UUID;
+
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(SecurityConfigTest.TestController.class)
@@ -21,6 +30,9 @@ class SecurityConfigTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private JwtEncoder jwtEncoder;
 
     @Test
     void protectedEndpointWithoutTokenReturnsUnauthorized() throws Exception {
@@ -41,6 +53,27 @@ class SecurityConfigTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void protectedEndpointWithValidTokenReturnsOk() throws Exception {
+        String token = createValidToken();
+
+        mockMvc.perform(get("/api/v1/test/protected")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    private String createValidToken() {
+        Instant now = Instant.now();
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .subject(UUID.randomUUID().toString())
+                .claim("role", "USER")
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(900))
+                .build();
+
+        return jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+    }
 
 
     @RestController
