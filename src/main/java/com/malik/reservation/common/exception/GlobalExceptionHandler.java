@@ -5,6 +5,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -119,6 +120,28 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "INTERNAL_SERVER_ERROR",
                 "An unexpected database error occurred",
+                request.getRequestURI()
+        );
+    }
+
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRequest(InvalidRequestException exception, HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "INVALID_REQUEST",
+                exception.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException exception, HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "ACCESS_DENIED",
+                "You do not have permission to perform this action",
                 request.getRequestURI()
         );
     }

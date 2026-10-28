@@ -154,22 +154,22 @@ Hold creation requires an `Idempotency-Key` header.
 
 Legend: ✅ done and verified · 🚧 in progress · 📋 planned
 
-| Area | Status | Notes                                                     |
-| --- | --- |-----------------------------------------------------------|
-| Requirements (SRS v2.0) | ✅ | Core vs Advanced scope agreed                             |
+| Area | Status | Notes                                                    |
+| --- | --- |----------------------------------------------------------|
+| Requirements (SRS v2.0) | ✅ | Core vs Advanced scope agreed                            |
 | Architecture and transaction strategy | ✅ | Modular monolith, pessimistic locking, constraint defense |
-| ER model and schema design | ✅ | Five tables, all constraints specified                    |
-| Flyway migration `V1__create_core_schema.sql` | ✅ | Applied and verified                                      |
-| Package structure | ✅ | See above                                                 |
-| JPA entity mappings and repositories | ✅ | Only currently required                                   |
-| Global exception handling and error format | ✅ | Only currently required                             |
-| Security: registration, login, JWT | 🚧 | Update this row when complete                             |
-| Hold creation with row locking | 📋 |                                                           |
-| Idempotent hold creation | 📋 |                                                           |
-| Confirm and cancel | 📋 |                                                           |
-| Expiry worker | 📋 |                                                           |
-| Concurrency tests (100 concurrent requests) | 📋 | Results will be recorded here once measured               |
-| OpenAPI documentation | 📋 |                                                           |
+| ER model and schema design | ✅ | Five tables, all constraints specified                   |
+| Flyway migration `V1__create_core_schema.sql` | ✅ | Applied and verified                                     |
+| Package structure | ✅ | See above                                                |
+| JPA entity mappings and repositories | ✅ | Only currently required                                  |
+| Global exception handling and error format | ✅ | Only currently required                                  |
+| Security: registration, login, JWT | ✅ | Implemented required only                                |
+| Hold creation with row locking | 📋 |                                                          |
+| Idempotent hold creation | 📋 |                                                          |
+| Confirm and cancel | 📋 |                                                          |
+| Expiry worker | 📋 |                                                          |
+| Concurrency tests (100 concurrent requests) | 📋 | Results will be recorded here once measured              |
+| OpenAPI documentation | 📋 |                                                          |
 
 ---
 
