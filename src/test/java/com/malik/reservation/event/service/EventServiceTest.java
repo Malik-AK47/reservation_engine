@@ -23,9 +23,12 @@ import static org.mockito.Mockito.when;
 
 import com.malik.reservation.event.dto.UpdateEventRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -258,5 +261,91 @@ class EventServiceTest {
 
         verify(eventRepository).findAllByStatus(EventStatus.PUBLISHED, pageable);
     }
+
+
+    @Test
+    void getAllEvents_whenStatusIsNull_shouldReturnAllEvents() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Event draft = Event.createDraft(
+                "Draft Event", null, "Pune",
+                Instant.parse("2027-06-15T10:00:00Z"),
+                Instant.parse("2027-06-15T12:00:00Z"), 60
+        );
+
+        Event published = Event.createDraft(
+                "Published Event", null, "Mumbai",
+                Instant.parse("2027-06-16T10:00:00Z"),
+                Instant.parse("2027-06-16T12:00:00Z"), 60
+        );
+        published.publish();
+
+        Page<Event> eventPage = new PageImpl<>(List.of(draft, published), pageable, 2);
+
+        when(eventRepository.findAll(pageable)).thenReturn(eventPage);
+
+        Page<EventResponse> result = eventService.getAllEvents(null, pageable);
+
+        assertEquals(2, result.getTotalElements());
+        assertEquals(EventStatus.DRAFT, result.getContent().get(0).status());
+        assertEquals(EventStatus.PUBLISHED, result.getContent().get(1).status());
+
+        verify(eventRepository).findAll(pageable);
+    }
+
+    @Test
+    void getAllEvents_whenStatusIsProvided_shouldReturnFilteredEvents() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Event draft = Event.createDraft(
+                "Draft Event", null, "Pune",
+                Instant.parse("2027-06-15T10:00:00Z"),
+                Instant.parse("2027-06-15T12:00:00Z"), 60
+        );
+
+        Page<Event> eventPage = new PageImpl<>(List.of(draft), pageable, 1);
+
+        when(eventRepository.findAllByStatus(EventStatus.DRAFT, pageable))
+                .thenReturn(eventPage);
+
+        Page<EventResponse> result = eventService.getAllEvents(EventStatus.DRAFT, pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals(EventStatus.DRAFT, result.getContent().get(0).status());
+
+        verify(eventRepository).findAllByStatus(EventStatus.DRAFT, pageable);
+    }
+
+    @Test
+    void getEventById_whenEventExists_shouldReturnEventRegardlessOfStatus() {
+        UUID eventId = UUID.randomUUID();
+
+        Event event = Event.createDraft(
+                "Draft Event", null, "Pune",
+                Instant.parse("2027-06-15T10:00:00Z"),
+                Instant.parse("2027-06-15T12:00:00Z"), 60
+        );
+
+        when(eventRepository.findById(eventId))
+                .thenReturn(Optional.of(event));
+
+        EventResponse result = eventService.getEventById(eventId);
+
+        assertEquals("Draft Event", result.name());
+        assertEquals(EventStatus.DRAFT, result.status());
+
+        verify(eventRepository).findById(eventId);
+    }
+
+    @Test
+    void getEventById_whenEventDoesNotExist_shouldThrowNotFound() {
+        UUID eventId = UUID.randomUUID();
+
+        when(eventRepository.findById(eventId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> eventService.getEventById(eventId));
+    }
+
 
 }

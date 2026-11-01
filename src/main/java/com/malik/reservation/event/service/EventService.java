@@ -106,6 +106,23 @@ public class EventService {
         return EventResponse.from(event);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public Page<EventResponse> getAllEvents(EventStatus status, Pageable pageable) {
+        Page<Event> events = status == null ? eventRepository.findAll(pageable) : eventRepository.findAllByStatus(status, pageable);
+
+        return events.map(EventResponse::from);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public EventResponse getEventById(UUID eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
+
+        return EventResponse.from(event);
+    }
+
 
     @Transactional(readOnly = true)
     public EventResponse getPublishedEvent(UUID eventId) {

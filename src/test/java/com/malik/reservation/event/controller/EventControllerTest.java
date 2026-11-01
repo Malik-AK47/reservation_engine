@@ -16,7 +16,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,7 +29,6 @@ import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.mockito.Mockito.verify;
 
 @WebMvcTest({EventController.class, AdminEventController.class})
 @Import(SecurityConfig.class)
@@ -154,4 +154,98 @@ class EventControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void admin_canListAllEvents() throws Exception {
+        when(eventService.getAllEvents(eq(null), any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/v1/admin/events"))
+                .andExpect(status().isOk());
+
+        verify(eventService).getAllEvents(eq(null), any(Pageable.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void admin_canFilterEventsByStatus() throws Exception {
+        when(eventService.getAllEvents(eq(EventStatus.DRAFT), any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/v1/admin/events")
+                        .param("status", "DRAFT")
+                        .param("page", "1")
+                        .param("size", "5"))
+                .andExpect(status().isOk());
+
+        verify(eventService).getAllEvents(eq(EventStatus.DRAFT), any(Pageable.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void admin_withInvalidStatus_shouldReceiveBadRequest() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/events")
+                        .param("status", "UNKNOWN"))
+                .andExpect(status().isBadRequest());
+
+        verify(eventService, never())
+                .getAllEvents(any(), any(Pageable.class));
+    }
+
+    @Test
+    void anonymousUser_cannotListAdminEvents() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/events"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userRole_cannotListAdminEvents() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/events"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void admin_canRetrieveEventById() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        Instant now = Instant.now();
+
+        EventResponse response = new EventResponse(
+                eventId,
+                "Draft Event",
+                "Test description",
+                "Pune",
+                Instant.parse("2027-06-15T10:00:00Z"),
+                Instant.parse("2027-06-15T12:00:00Z"),
+                EventStatus.DRAFT,
+                60,
+                now,
+                now
+        );
+
+        when(eventService.getEventById(eventId)).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/admin/events/{id}", eventId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(eventId.toString()))
+                .andExpect(jsonPath("$.name").value("Draft Event"))
+                .andExpect(jsonPath("$.status").value("DRAFT"));
+
+        verify(eventService).getEventById(eventId);
+    }
+
+    @Test
+    void anonymousUser_cannotRetrieveAdminEvent() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/events/{id}", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userRole_cannotRetrieveAdminEvent() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/events/{id}", UUID.randomUUID()))
+                .andExpect(status().isForbidden());
+    }
 }

@@ -3,9 +3,14 @@ package com.malik.reservation.event.controller;
 import com.malik.reservation.event.dto.CreateEventRequest;
 import com.malik.reservation.event.dto.EventResponse;
 import com.malik.reservation.event.dto.UpdateEventRequest;
+import com.malik.reservation.event.entity.EventStatus;
 import com.malik.reservation.event.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -45,5 +50,16 @@ public class AdminEventController {
     public ResponseEntity<EventResponse> publishEvent(@PathVariable UUID id) {
         EventResponse response = eventService.publishEvent(id);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public Page<EventResponse> getAllEvents(@RequestParam(required = false) EventStatus status,
+                @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return eventService.getAllEvents(status, pageable);
+    }
+
+    @GetMapping("/{id}")
+    public EventResponse getEventById(@PathVariable UUID id) {
+        return eventService.getEventById(id);
     }
 }
