@@ -94,7 +94,7 @@ public class EventService {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public EventResponse publishEvent(UUID eventId) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdForUpdate(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
 
         try {

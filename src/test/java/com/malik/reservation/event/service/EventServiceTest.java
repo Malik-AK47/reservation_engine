@@ -181,12 +181,15 @@ class EventServiceTest {
                 60
         );
 
-        when(eventRepository.findById(eventId))
-                .thenReturn(java.util.Optional.of(event));
+        when(eventRepository.findByIdForUpdate(eventId))
+                .thenReturn(Optional.of(event));
 
         EventResponse response = eventService.publishEvent(eventId);
 
         assertEquals(EventStatus.PUBLISHED, response.status());
+
+        // Verify that publication uses the pessimistic-locking query
+        verify(eventRepository).findByIdForUpdate(eventId);
     }
 
     @Test
@@ -203,8 +206,8 @@ class EventServiceTest {
         );
         event.publish();
 
-        when(eventRepository.findById(eventId))
-                .thenReturn(java.util.Optional.of(event));
+        when(eventRepository.findByIdForUpdate(eventId))
+                .thenReturn(Optional.of(event));
 
         assertThrows(BusinessException.class, () -> eventService.publishEvent(eventId));
     }

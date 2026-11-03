@@ -26,4 +26,12 @@ public class Resource extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private ResourceStatus status;
+
+    public static Resource create(Event event, String resourceCode) {
+        Resource resource = new Resource();
+        resource.setEvent(event);
+        resource.setResourceCode(resourceCode);
+        resource.setStatus(ResourceStatus.AVAILABLE);
+        return resource;
+    }
 }

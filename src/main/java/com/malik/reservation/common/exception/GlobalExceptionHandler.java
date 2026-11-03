@@ -104,14 +104,27 @@ public class GlobalExceptionHandler {
         Throwable cause = exception;
 
         while (cause != null) {
-            if (cause instanceof ConstraintViolationException violation && "uq_app_users_normalized_email".equals(violation.getConstraintName())) {
+            if (cause instanceof ConstraintViolationException violation) {
 
-                return buildErrorResponse(
-                        HttpStatus.CONFLICT,
-                        "EMAIL_ALREADY_REGISTERED",
-                        "Email is already registered",
-                        request.getRequestURI()
-                );
+                String constraintName = violation.getConstraintName();
+
+                if ("uq_app_users_normalized_email".equals(constraintName)) {
+                    return buildErrorResponse(
+                            HttpStatus.CONFLICT,
+                            "EMAIL_ALREADY_REGISTERED",
+                            "Email is already registered",
+                            request.getRequestURI()
+                    );
+                }
+
+                if ("uq_resources_event_code".equals(constraintName)) {
+                    return buildErrorResponse(
+                            HttpStatus.CONFLICT,
+                            "RESOURCE_CODE_ALREADY_EXISTS",
+                            "Resource code already exists for this event",
+                            request.getRequestURI()
+                    );
+                }
             }
 
             cause = cause.getCause();
@@ -124,7 +137,6 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
-
 
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<ErrorResponse> handleInvalidRequest(InvalidRequestException exception, HttpServletRequest request) {
