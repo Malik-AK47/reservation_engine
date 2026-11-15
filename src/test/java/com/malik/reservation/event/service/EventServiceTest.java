@@ -68,6 +68,7 @@ class EventServiceTest {
     }
 
 
+
     @Test
     void updateDraftEvent_shouldUpdateAllEditableDetails() {
         UUID eventId = UUID.randomUUID();
@@ -81,8 +82,8 @@ class EventServiceTest {
                 60
         );
 
-        when(eventRepository.findById(eventId))
-                .thenReturn(java.util.Optional.of(event));
+        when(eventRepository.findByIdForUpdate(eventId))
+                .thenReturn(Optional.of(event));
 
         UpdateEventRequest request = new UpdateEventRequest(
                 "Updated Event",
@@ -101,6 +102,8 @@ class EventServiceTest {
         assertEquals(Instant.parse("2027-06-16T10:00:00Z"), response.startTime());
         assertEquals(90, response.cancellationCutoffMinutes());
         assertEquals(EventStatus.DRAFT, response.status());
+
+        verify(eventRepository).findByIdForUpdate(eventId);
     }
 
     @Test
@@ -117,8 +120,8 @@ class EventServiceTest {
         );
         event.publish();
 
-        when(eventRepository.findById(eventId))
-                .thenReturn(java.util.Optional.of(event));
+        when(eventRepository.findByIdForUpdate(eventId))
+                .thenReturn(Optional.of(event));
 
         UpdateEventRequest request = new UpdateEventRequest(
                 "Updated Event",
@@ -137,6 +140,8 @@ class EventServiceTest {
         assertEquals(Instant.parse("2027-06-15T12:00:00Z"), response.endTime());
         assertEquals(60, response.cancellationCutoffMinutes());
         assertEquals(EventStatus.PUBLISHED, response.status());
+
+        verify(eventRepository).findByIdForUpdate(eventId);
     }
 
     @Test
@@ -152,8 +157,8 @@ class EventServiceTest {
                 60
         );
 
-        when(eventRepository.findById(eventId))
-                .thenReturn(java.util.Optional.of(event));
+        when(eventRepository.findByIdForUpdate(eventId))
+                .thenReturn(Optional.of(event));
 
         UpdateEventRequest request = new UpdateEventRequest(
                 "Updated Event",
@@ -164,8 +169,34 @@ class EventServiceTest {
                 null
         );
 
-        assertThrows(InvalidRequestException.class, () -> eventService.updateEvent(eventId, request));
+        assertThrows(InvalidRequestException.class,
+                () -> eventService.updateEvent(eventId, request));
+
+        verify(eventRepository).findByIdForUpdate(eventId);
     }
+
+    @Test
+    void updateEvent_whenEventDoesNotExist_shouldThrowNotFound() {
+        UUID eventId = UUID.randomUUID();
+
+        when(eventRepository.findByIdForUpdate(eventId))
+                .thenReturn(Optional.empty());
+
+        UpdateEventRequest request = new UpdateEventRequest(
+                "Updated Event",
+                null,
+                "Mumbai",
+                Instant.parse("2027-06-16T10:00:00Z"),
+                Instant.parse("2027-06-16T12:00:00Z"),
+                90
+        );
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> eventService.updateEvent(eventId, request));
+
+        verify(eventRepository).findByIdForUpdate(eventId);
+    }
+
 
 
     @Test
