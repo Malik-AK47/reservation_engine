@@ -1,6 +1,7 @@
 
 package com.malik.reservation.resource.entity;
 
+import com.malik.reservation.common.exception.BusinessException;
 import com.malik.reservation.common.persistence.AuditableEntity;
 import com.malik.reservation.event.entity.Event;
 import jakarta.persistence.*;
@@ -33,5 +34,29 @@ public class Resource extends AuditableEntity {
         resource.setResourceCode(resourceCode);
         resource.setStatus(ResourceStatus.AVAILABLE);
         return resource;
+    }
+
+    public void hold() {
+        ensureStatus(ResourceStatus.AVAILABLE);
+        this.status = ResourceStatus.HELD;
+    }
+
+    public void book() {
+        ensureStatus(ResourceStatus.HELD);
+        this.status = ResourceStatus.BOOKED;
+    }
+
+    public void release() {
+        if (status != ResourceStatus.HELD && status != ResourceStatus.BOOKED) {
+            throw new BusinessException("Only held or booked resources can be released");
+        }
+
+        this.status = ResourceStatus.AVAILABLE;
+    }
+
+    private void ensureStatus(ResourceStatus expectedStatus) {
+        if (status != expectedStatus) {
+            throw new BusinessException("Resource must be " + expectedStatus + " but is " + status);
+        }
     }
 }

@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ReservationRepository extends JpaRepository<Reservation, UUID> {
+//
+//    List<Reservation> findByResource_IdAndStatusIn(UUID resourceId, Collection<ReservationStatus> statuses);
 
-    List<Reservation> findByResource_IdAndStatusIn(UUID resourceId, Collection<ReservationStatus> statuses);
+    Optional<Reservation> findByResource_IdAndStatusIn(UUID resourceId, Collection<ReservationStatus> statuses);
 }
